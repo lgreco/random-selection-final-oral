@@ -34,9 +34,12 @@ public class RandomSelection {
      * @return list of randomly selected items
      */
     private static List<String> selectAtRandom(List<String> fromList, int numberToSelect) {
-        // Create a copy of the list of email addresses
+        // Create a copy of the list of email addresses. A list is a bit more flexible
+        // to manipulate an a basic array.
         List<String> copy = new ArrayList<>(fromList);
-        // Randomly shuffle the copy of the list of email addresses
+        // Randomly shuffle the copy of the list of email addresses. If we were using an
+        // array, this random shuffling would have required a few lines of code probably
+        // as a separate method.
         Collections.shuffle(copy, random);
         // Select the first few elements of the randomly shuffled list and return them.
         return copy.subList(0, numberToSelect);
@@ -57,7 +60,9 @@ public class RandomSelection {
             numberToSelect = fromArray.length / 2;
         }
 
-        // Convert the array into a list
+        // Convert the array into a list. It will make things easier when we need to
+        // find if the email entered by the user is valid, ie, exists in the list of
+        // students.
         List<String> selectFrom = new ArrayList<>(Arrays.asList(fromArray));
         // Create a local (deep) copy of the input array(list) ensuring lower case
         List<String> selectFromLower = new ArrayList<>();
