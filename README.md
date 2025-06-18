@@ -1,2 +1,1 @@
-# random-selection-final-oral
-Code for final exam 1-1 meetings with leo
+# Random selection for 1-1 meetings during finals week
