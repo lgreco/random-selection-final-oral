@@ -1,92 +1,102 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
 public class RandomSelection {
 
-    static private final String[] emailFirstThree = {
+    // Input data -- first three characters of students' LUC email addresses
+    private static final String[] EMAIL_FIRST_THREE = {
             "dah", "bba", "dba", "sbe", "obe",
             "mdi", "ret", "jha", "kjo",
-            "jkn", "wlo", "alu", "jmc", "nqa", "lsa" };
+            "jkn", "wlo", "alu", "jmc", "nqa", "lsa"
+    };
 
-    // Default number of students to select
-    static private final int DEFAULT_SELECT_NUMBER = 8;
-    // ANSI clear screen and move cursor to home position
-    static private final String CLEAR_SCREEN = "\033[2J\033[H";
-    // Default number of trials for simulation
-    static private final int DEFAULT_TRIALS = 100;
+    /** Default number of students to select */
+    private static final int DEFAULT_SELECT_NUMBER = 8;
+    /** ASCII escape + ANSI codes to clear screen */
+    private static final String CLEAR_SCREEN = "\033[2J\033[H";
+    /** How many simulations to run */
+    private static final int DEFAULT_TRIALS = 100;
 
-    static private Random random = new Random();
-    static private Scanner scanner = new Scanner(System.in);
+    /** Random number for shuffling the list of students */
+    private static final Random random = new Random();
+    /** We'll need a scanner to read data from the keyboard */
+    private static final Scanner scanner = new Scanner(System.in);
 
     /**
-     * Selects randomly a few entries from a list.
-     * 
-     * @param fromList       list with values to select a few of them randomly
-     * @param numberToSelect int how many values to select randomly
-     * @return list with randomly selected values
+     * Selects a specified number of random, non-repeating items from a list.
+     *
+     * @param fromList       the list to select from
+     * @param numberToSelect number of items to randomly select
+     * @return list of randomly selected items
      */
-    static private List<String> selectAtRandom(List<String> fromList, int numberToSelect) {
-        // List to return
-        List<String> selected = new ArrayList<>();
-        // Copy of input list to avoid depleting original input via successive removals
-        List<String> selectFrom = new ArrayList<>(fromList);
-        // Remove items from the input copy at random
-        for (int i = 0; i < numberToSelect; i++) {
-            int index = random.nextInt(selectFrom.size());
-            selected.add(selectFrom.remove(index));
-        }
-        // Done
-        return selected;
+    private static List<String> selectAtRandom(List<String> fromList, int numberToSelect) {
+        // Create a copy of the list of email addresses
+        List<String> copy = new ArrayList<>(fromList);
+        // Randomly shuffle the copy of the list of email addresses
+        Collections.shuffle(copy, random);
+        // Select the first few elements of the randomly shuffled list and return them.
+        return copy.subList(0, numberToSelect);
     } // method selectAtRandom
 
     /**
-     * Simulates random selections multiple times to determine the likelihood that a
-     * user provided value will be selected. The theoretical probality is also
-     * computed for camparison with the experimental outcome.
-     * 
-     * @param fromArray      String[] with data to randomly select from
-     * @param trials         int number of simulations to run
-     * @param numberToSelect int how many items to select randomly
+     * Runs a simulation of random selections to estimate how likely a target
+     * item is to be picked.
+     *
+     * @param fromArray      array of input items to select from
+     * @param trials         number of simulation trials
+     * @param numberToSelect number of items selected per trial
      */
-    static private void simulate(String[] fromArray, int trials, int numberToSelect) {
-        // Guard statement
+    private static void simulate(String[] fromArray, int trials, int numberToSelect) {
+        // Guard statement: there are fewer students than those we want to select
+        // randomly, cut the target number to half the size of the array.
         if (numberToSelect > fromArray.length) {
-            // Instead of throwing an exception, adjust the number of items to select to a
-            // practical size, maybe half the length of the input array
             numberToSelect = fromArray.length / 2;
         }
-        // Convert the input array to an ArrayList for easier removals and contains()
+
+        // Convert the array into a list
         List<String> selectFrom = new ArrayList<>(Arrays.asList(fromArray));
-        // Obtain a value to see how likely it is to be selected
-        String email = "";
-        // Ensure that value is a valid element from the input arraylist.
-        while (!selectFrom.contains(email)) {
-            System.out.println(CLEAR_SCREEN);
-            System.out.print("\nEnter the first three characters of your LUC email: ");
-            email = scanner.nextLine().toLowerCase();
+        // Create a local (deep) copy of the input array(list) ensuring lower case
+        List<String> selectFromLower = new ArrayList<>();
+        for (String s : selectFrom) {
+            selectFromLower.add(s.toLowerCase());
         }
-        // Initialize counter for how many times email is found in randomly selected data
+        // Ask the user for their email's first three characters. Keep asking as long as
+        // they type something that does not exist in the list of emails. Rare
+        // opportunity to use do-while!
+        String email;
+        do {
+            System.out.print(CLEAR_SCREEN);
+            System.out.print("\nEnter the first three characters of your LUC email: ");
+            email = scanner.nextLine().trim().toLowerCase();
+        } while (!selectFromLower.contains(email));
+        // Run the simulations by initialize a counter for how many times the entered
+        // email appears in the randomly selected list.
         int foundInSimulation = 0;
-        // Perform the experiments
         for (int i = 0; i < trials; i++) {
-            if (selectAtRandom(selectFrom, numberToSelect).contains(email)) {
-                // The target email was found in this simulation, update the counter
-                foundInSimulation += 1;
+            if (selectAtRandom(selectFromLower, numberToSelect).contains(email)) {
+                foundInSimulation++;
             }
         }
-        // Report findings
-        System.out.printf("\n\nOut of %d simulations, \"%s\" was selected %d times.",
+        // Prepare to report findings
+        double empiricalProbability = 100.0 * foundInSimulation / trials;
+        double theoreticalProbability = 100.0 * numberToSelect / selectFrom.size();
+        // Report
+        System.out.printf(
+                "\n\nOut of %d simulations, \"%s\" was selected %d times.",
                 trials, email, foundInSimulation);
-        System.out.printf("\nThat's a %.2f%% chance to be selected for a final 1-1 with Leo.",
-                100.0 * foundInSimulation / (double) trials);
-        System.out.printf("\nIn theory, the probability of \"%s\" being selected is %.2f%%.\n\n",
-                email, 100.0 * numberToSelect / (double) selectFrom.size());
+        System.out.printf(
+                "\nThat's a %.2f%% chance to be selected for a final 1-1 with Leo.",
+                empiricalProbability);
+        System.out.printf(
+                "\nIn theory, the probability of \"%s\" being selected is %.2f%%.\n\n",
+                email, theoreticalProbability);
     } // method simulate
 
     public static void main(String[] args) {
-        simulate(emailFirstThree, DEFAULT_TRIALS, DEFAULT_SELECT_NUMBER);
-    }
-}
+        simulate(EMAIL_FIRST_THREE, DEFAULT_TRIALS, DEFAULT_SELECT_NUMBER);
+    } // method main
+} // class RandomSelection
