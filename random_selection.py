@@ -1,5 +1,5 @@
 
-# We'll need a random number general and the deep copy function
+# We'll need a random number generator and the deep copy function
 import random, copy
 
 # DEFAULT number of students to invite
